@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@daytonaio/sdk": "^0.187.0",
     "@google/generative-ai": "^0.24.1",
     "@lucia-auth/adapter-prisma": "^4.0.0",
     "@octokit/rest": "^21.0.0",
@@ -18,7 +19,6 @@
     "arctic": "^2.2.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "e2b": "^2.14.1",
     "express": "^4.21.0",
     "express-rate-limit": "^7.4.0",
     "lucia": "^3.2.0",
