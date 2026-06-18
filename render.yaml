@@ -1,0 +1,49 @@
+# Render Blueprint for the Vendi backend (apps/server).
+# Deploy: Render Dashboard → New → Blueprint → pick this repo.
+# It builds the Docker image from apps/server/Dockerfile (which runs
+# `prisma generate` + build) and starts the long-running Express/WebSocket server.
+services:
+  - type: web
+    name: cap-server
+    runtime: docker
+    plan: free
+    dockerfilePath: ./apps/server/Dockerfile
+    dockerContext: .            # build context = repo root (Dockerfile copies the whole monorepo)
+    autoDeploy: true
+    envVars:
+      # ── Non-secret values (safe to commit) ──────────────────────────────
+      - key: NODE_ENV
+        value: production
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: DAYTONA_SERVER_URL
+        value: https://app.daytona.io/api
+      - key: DAYTONA_TARGET
+        value: us
+      # Your Vercel frontend (used for CORS + post-login redirect)
+      - key: FRONTEND_URL
+        value: https://cap-web-one.vercel.app
+      # ── Secrets (set these in the Render dashboard, NOT in git) ──────────
+      - key: DATABASE_URL
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: DAYTONA_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      # OAuth callbacks — set to this service's URL once it's created, e.g.
+      #   https://cap-server.onrender.com/api/v1/auth/github/callback
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: GITHUB_REDIRECT_URI
+        sync: false
+    # Note: do NOT set PORT — Render injects it and the app reads it automatically.
