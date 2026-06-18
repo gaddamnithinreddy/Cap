@@ -17,8 +17,15 @@ const envSchema = z.object({
   // Encryption
   ENCRYPTION_KEY: z.string().min(32),
 
-  // e2b
-  E2B_API_KEY: z.string().optional(),
+  // Daytona (sandbox provider)
+  DAYTONA_API_KEY: z.string().optional(),
+  DAYTONA_SERVER_URL: z.string().optional(),
+  DAYTONA_TARGET: z.string().optional(),
+  // Optional: boot sandboxes from a pre-built Daytona snapshot instead of the default image.
+  DAYTONA_SNAPSHOT: z.string().optional(),
+  // Optional: when "true", build-template bakes deps into a dedicated Daytona snapshot
+  // (parity with the old E2B template). Default provisions deps at sandbox start.
+  DAYTONA_BUILD_SNAPSHOT: z.string().optional(),
 
   // LLM
   LLM_PROVIDER: z.enum(["vercel", "openai", "openrouter"]).default("vercel"),
