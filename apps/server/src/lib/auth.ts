@@ -12,7 +12,7 @@ export const lucia = new Lucia(adapter, {
     name: COOKIE_NAME,
     attributes: {
       secure: env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
     },
     expires: true,
   },

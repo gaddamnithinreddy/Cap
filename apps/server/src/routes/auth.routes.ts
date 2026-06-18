@@ -26,14 +26,14 @@ router.get("/google", (_req, res) => {
   res.cookie("google_oauth_state", state, {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: OAUTH_STATE_COOKIE_MAX_AGE * 1000,
     path: "/",
   });
   res.cookie("google_code_verifier", codeVerifier, {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: OAUTH_STATE_COOKIE_MAX_AGE * 1000,
     path: "/",
   });
@@ -124,7 +124,7 @@ router.get("/github", (_req, res) => {
   res.cookie("github_oauth_state", state, {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: OAUTH_STATE_COOKIE_MAX_AGE * 1000,
     path: "/",
   });
