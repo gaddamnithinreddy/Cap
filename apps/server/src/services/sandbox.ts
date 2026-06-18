@@ -21,6 +21,11 @@ let _client: Daytona | null = null;
 /** Lazily-constructed Daytona client (so missing creds only fail when sandboxes are used). */
 function client(): Daytona {
   if (!_client) {
+    if (!env.DAYTONA_API_KEY || !env.DAYTONA_SERVER_URL || !env.DAYTONA_TARGET) {
+      throw new Error(
+        "Daytona configuration is incomplete. Please set DAYTONA_API_KEY, DAYTONA_SERVER_URL, and DAYTONA_TARGET environment variables."
+      );
+    }
     _client = new Daytona({
       apiKey: env.DAYTONA_API_KEY,
       // The SDK option is `apiUrl`; we expose it as DAYTONA_SERVER_URL for parity with the docs.
