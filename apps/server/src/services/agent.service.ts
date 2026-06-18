@@ -70,7 +70,7 @@ function getLLMConfig() {
     return {
       llmBaseUrl: "https://api.groq.com/openai/v1/chat/completions",
       llmApiKey: env.GROQ_API_KEY,
-      llmModel: "llama-3.3-70b-versatile",
+      llmModel: "llama-3.1-8b-instant",
     };
   }
   if (!env.OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY not set");

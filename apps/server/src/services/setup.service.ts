@@ -19,7 +19,7 @@ function getLLMConfig() {
   }
   if (env.LLM_PROVIDER === "groq") {
     if (!env.GROQ_API_KEY) throw new Error("GROQ_API_KEY not set");
-    return { url: "https://api.groq.com/openai/v1/chat/completions", key: env.GROQ_API_KEY, model: "llama-3.3-70b-versatile" };
+    return { url: "https://api.groq.com/openai/v1/chat/completions", key: env.GROQ_API_KEY, model: "llama-3.1-8b-instant" };
   }
   if (!env.OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY not set");
   return { url: "https://openrouter.ai/api/v1/chat/completions", key: env.OPENROUTER_API_KEY, model: "anthropic/claude-sonnet-4" };
