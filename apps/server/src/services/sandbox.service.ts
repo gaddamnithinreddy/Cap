@@ -60,9 +60,9 @@ export async function startSessionSandbox(
       else if (svc === "redis") servicePkgs.push("redis-server");
       else if (svc === "mysql") servicePkgs.push("mysql-server");
     }
-    const allPkgs = ["git", "curl", "xvfb", "x11vnc", "python3-pip", "chromium", ...servicePkgs].join(" ");
+    const allPkgs = ["git", "curl", "xvfb", "x11vnc", "python3-pip", "chromium", "net-tools", ...servicePkgs].join(" ");
     await sandbox.commands.run(
-      `sudo apt-get update && sudo apt-get install -y ${allPkgs} && pip3 install websockify --break-system-packages && sudo apt-get clean`,
+      `sudo apt-get update && sudo apt-get install -y ${allPkgs} && sudo pip3 install websockify --break-system-packages && sudo apt-get clean`,
       { requestTimeoutMs: 180_000 }
     );
 
@@ -123,51 +123,88 @@ export async function startSessionSandbox(
     // Start browser streaming: Xvfb + Chromium + x11vnc + websockify
     const devPort = project.devServerPort || 3000;
 
-    // Start virtual display in background
-    await sandbox.commands.run(
-      "nohup Xvfb :99 -screen 0 1280x720x24 >/tmp/xvfb.log 2>&1 &",
-      { background: true, requestTimeoutMs: 5_000 }
-    );
+    try {
+      // Start virtual display in background
+      await sandbox.commands.run(
+        "nohup Xvfb :99 -screen 0 1280x720x24 >/tmp/xvfb.log 2>&1 &",
+        { background: true, requestTimeoutMs: 5_000 }
+      );
 
-    // Wait for Xvfb to be ready
-    await sandbox.commands.run("sleep 2", { requestTimeoutMs: 5_000 });
+      // Wait for Xvfb to be ready
+      await sandbox.commands.run("sleep 2", { requestTimeoutMs: 5_000 });
 
-    // Start x11vnc (VNC server) on display :99, port 5900
-    await sandbox.commands.run(
-      "nohup x11vnc -display :99 -nopw -listen 0.0.0.0 -forever -shared -rfbport 5900 >/tmp/x11vnc.log 2>&1 &",
-      { background: true, requestTimeoutMs: 5_000 }
-    );
+      // Check if Xvfb is running
+      const xvfbCheck = await sandbox.commands.run(
+        "pgrep -f 'Xvfb :99' && echo 'OK' || echo 'FAIL'",
+        { requestTimeoutMs: 5_000 }
+      );
+      console.log(`[VNC] Xvfb status: ${xvfbCheck.stdout.trim()}`);
 
-    // Wait for x11vnc to start
-    await sandbox.commands.run("sleep 2", { requestTimeoutMs: 5_000 });
+      // Start x11vnc (VNC server) on display :99, port 5900
+      await sandbox.commands.run(
+        "nohup x11vnc -display :99 -nopw -listen 0.0.0.0 -forever -shared -rfbport 5900 >/tmp/x11vnc.log 2>&1 &",
+        { background: true, requestTimeoutMs: 5_000 }
+      );
 
-    // Start websockify to bridge WebSocket (6080) to VNC (5900)
-    await sandbox.commands.run(
-      "nohup python3 -m websockify 6080 localhost:5900 >/tmp/websockify.log 2>&1 &",
-      { background: true, requestTimeoutMs: 5_000 }
-    );
+      // Wait for x11vnc to start
+      await sandbox.commands.run("sleep 2", { requestTimeoutMs: 5_000 });
 
-    // Wait for websockify to start
-    await sandbox.commands.run("sleep 3", { requestTimeoutMs: 5_000 });
+      // Check if x11vnc is running
+      const vncCheck = await sandbox.commands.run(
+        "pgrep -f x11vnc && echo 'OK' || echo 'FAIL'",
+        { requestTimeoutMs: 5_000 }
+      );
+      console.log(`[VNC] x11vnc status: ${vncCheck.stdout.trim()}`);
 
-    // Verify websockify is running
-    const wsCheck = await sandbox.commands.run(
-      "pgrep -f websockify && echo 'RUNNING' || echo 'FAILED'",
-      { requestTimeoutMs: 5_000 }
-    );
+      // Check if websockify module is available
+      const wsModuleCheck = await sandbox.commands.run(
+        "python3 -m websockify --version 2>&1 || echo 'NOT_INSTALLED'",
+        { requestTimeoutMs: 5_000 }
+      );
+      console.log(`[VNC] websockify module check: ${wsModuleCheck.stdout.trim()}`);
 
-    if (!wsCheck.stdout.includes("RUNNING")) {
-      const logs = await sandbox.commands.run("cat /tmp/websockify.log 2>/dev/null || echo 'No logs'", {
-        requestTimeoutMs: 5_000,
-      });
-      throw new Error(`Websockify failed to start. Logs: ${logs.stdout}`);
+      // Start websockify to bridge WebSocket (6080) to VNC (5900)
+      await sandbox.commands.run(
+        "nohup python3 -m websockify --web=/usr/share/novnc 6080 localhost:5900 >/tmp/websockify.log 2>&1 &",
+        { background: true, requestTimeoutMs: 5_000 }
+      );
+
+      // Wait for websockify to start
+      await sandbox.commands.run("sleep 3", { requestTimeoutMs: 5_000 });
+
+      // Verify websockify is running
+      const wsCheck = await sandbox.commands.run(
+        "pgrep -f websockify && echo 'RUNNING' || echo 'FAILED'",
+        { requestTimeoutMs: 5_000 }
+      );
+      console.log(`[VNC] websockify status: ${wsCheck.stdout.trim()}`);
+
+      // Check if port 6080 is listening
+      const portCheck = await sandbox.commands.run(
+        "netstat -tuln | grep 6080 || ss -tuln | grep 6080 || echo 'PORT_NOT_LISTENING'",
+        { requestTimeoutMs: 5_000 }
+      );
+      console.log(`[VNC] Port 6080 check: ${portCheck.stdout.trim()}`);
+
+      if (!wsCheck.stdout.includes("RUNNING")) {
+        const logs = await sandbox.commands.run("cat /tmp/websockify.log 2>/dev/null || echo 'No logs'", {
+          requestTimeoutMs: 5_000,
+        });
+        console.error(`[VNC] Websockify failed. Logs: ${logs.stdout}`);
+        throw new Error(`Websockify failed to start. Logs: ${logs.stdout}`);
+      }
+
+      // Start Chromium browser pointing to the dev server (after VNC is ready)
+      await sandbox.commands.run(
+        `DISPLAY=:99 nohup chromium --no-sandbox --disable-gpu --disable-dev-shm-usage --window-size=1280,720 --start-maximized http://localhost:${devPort} >/tmp/chromium.log 2>&1 &`,
+        { background: true, requestTimeoutMs: 10_000 }
+      );
+
+      console.log(`[VNC] All services started successfully`);
+    } catch (error) {
+      console.error(`[VNC] Error starting VNC services:`, error);
+      throw error;
     }
-
-    // Start Chromium browser pointing to the dev server (after VNC is ready)
-    await sandbox.commands.run(
-      `DISPLAY=:99 nohup chromium --no-sandbox --disable-gpu --disable-dev-shm-usage --window-size=1280,720 --start-maximized http://localhost:${devPort} >/tmp/chromium.log 2>&1 &`,
-      { background: true, requestTimeoutMs: 10_000 }
-    );
 
     // Get noVNC WebSocket URL for browser streaming
     const previewUrl = `wss://${await sandbox.getHost(6080)}`;
