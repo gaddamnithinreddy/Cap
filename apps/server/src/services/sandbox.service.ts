@@ -66,9 +66,6 @@ export async function startSessionSandbox(
       { requestTimeoutMs: 180_000 }
     );
 
-    // Install global npm tools
-    await sandbox.commands.run("sudo npm install -g bun @openai/codex-sdk", { requestTimeoutMs: 60_000 });
-
     // Clone the repo
     await sandbox.commands.run(
       `GIT_TOKEN="${githubToken}" git clone https://x-access-token:${githubToken}@github.com/${project.githubRepoFullName}.git /workspace 2>&1`,
