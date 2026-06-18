@@ -57,6 +57,14 @@ function getLLMConfig() {
       llmModel: "gpt-4.1",
     };
   }
+  if (env.LLM_PROVIDER === "gemini") {
+    if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not set");
+    return {
+      llmBaseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      llmApiKey: env.GEMINI_API_KEY,
+      llmModel: "gemini-2.5-flash",
+    };
+  }
   if (!env.OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY not set");
   return {
     llmBaseUrl: "https://openrouter.ai/api/v1/chat/completions",

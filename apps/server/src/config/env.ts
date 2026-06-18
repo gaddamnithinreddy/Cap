@@ -28,10 +28,12 @@ const envSchema = z.object({
   DAYTONA_BUILD_SNAPSHOT: z.string().optional(),
 
   // LLM
-  LLM_PROVIDER: z.enum(["vercel", "openai", "openrouter"]).default("vercel"),
+  LLM_PROVIDER: z.enum(["vercel", "openai", "openrouter", "gemini"]).default("vercel"),
   AI_GATEWAY_API_KEY: z.string().optional(),
   OPENROUTER_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
+  // Google Gemini via its OpenAI-compatible endpoint.
+  GEMINI_API_KEY: z.string().optional(),
 });
 
 type Env = z.infer<typeof envSchema>;

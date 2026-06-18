@@ -13,6 +13,10 @@ function getLLMConfig() {
     if (!env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY not set");
     return { url: "https://api.openai.com/v1/chat/completions", key: env.OPENAI_API_KEY, model: "gpt-4.1" };
   }
+  if (env.LLM_PROVIDER === "gemini") {
+    if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not set");
+    return { url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", key: env.GEMINI_API_KEY, model: "gemini-2.5-flash" };
+  }
   if (!env.OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY not set");
   return { url: "https://openrouter.ai/api/v1/chat/completions", key: env.OPENROUTER_API_KEY, model: "anthropic/claude-sonnet-4" };
 }
