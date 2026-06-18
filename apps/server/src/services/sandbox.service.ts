@@ -1,4 +1,4 @@
-import { Sandbox } from "e2b";
+import { Sandbox } from "./sandbox";
 import { prisma } from "../lib/prisma";
 import { decrypt } from "../lib/crypto";
 import { env } from "../config/env";
@@ -157,7 +157,7 @@ export async function startSessionSandbox(
     await sandbox.commands.run("sleep 2", { requestTimeoutMs: 5_000 });
 
     // Get noVNC WebSocket URL for browser streaming
-    const previewUrl = `wss://${sandbox.getHost(6080)}`;
+    const previewUrl = `wss://${await sandbox.getHost(6080)}`;
 
     // Update session record
     await prisma.session.update({

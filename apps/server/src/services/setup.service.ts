@@ -1,4 +1,4 @@
-import { Sandbox } from "e2b";
+import { Sandbox } from "./sandbox";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { decrypt, encrypt } from "../lib/crypto";

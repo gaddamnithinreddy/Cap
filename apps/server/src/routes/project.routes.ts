@@ -163,7 +163,7 @@ router.put("/:projectId", requireOrg("ADMIN"), async (req: Request, res: Respons
   }
 });
 
-// POST /orgs/:orgId/projects/:projectId/build-template — trigger e2b template build
+// POST /orgs/:orgId/projects/:projectId/build-template — trigger Daytona template build
 router.post(
   "/:projectId/build-template",
   requireOrg("ADMIN"),

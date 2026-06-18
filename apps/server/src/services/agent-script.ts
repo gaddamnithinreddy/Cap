@@ -1,5 +1,5 @@
 /**
- * Returns the source code for the agent script that runs INSIDE the e2b sandbox.
+ * Returns the source code for the agent script that runs INSIDE the Daytona sandbox.
  * This script is written to /workspace/.vendi/agent.mjs before each agent turn.
  */
 export function getAgentScript(): string {

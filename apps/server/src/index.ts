@@ -3,7 +3,7 @@ import { app } from "./app";
 import { env } from "./config/env";
 import { setupWebSocket } from "./lib/ws";
 import { prisma } from "./lib/prisma";
-import { Sandbox } from "e2b";
+import { Sandbox } from "./services/sandbox";
 import { sweepActiveAgentRuns } from "./services/agent.service";
 
 const server = createServer(app);

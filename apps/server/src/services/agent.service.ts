@@ -1,4 +1,4 @@
-import { Sandbox } from "e2b";
+import { Sandbox } from "./sandbox";
 import { prisma } from "../lib/prisma";
 import { env } from "../config/env";
 import { getAgentScript } from "./agent-script";
