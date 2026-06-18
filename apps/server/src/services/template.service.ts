@@ -44,7 +44,7 @@ export async function buildProjectTemplate(projectId: string): Promise<void> {
         `RUN apt-get update && apt-get install -y ${allPkgs} \\`,
         `    && pip3 install websockify --break-system-packages \\`,
         `    && apt-get clean && rm -rf /var/lib/apt/lists/*`,
-        `RUN npm install -g bun @openai/codex`,
+        `RUN npm install -g bun @openai/codex-sdk`,
         `RUN mkdir -p /workspace && chmod 777 /workspace \\`,
         `    && git config --global --add safe.directory /workspace`,
       ]);

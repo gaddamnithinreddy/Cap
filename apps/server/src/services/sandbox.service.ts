@@ -67,7 +67,7 @@ export async function startSessionSandbox(
     );
 
     // Install global npm tools
-    await sandbox.commands.run("npm install -g bun @openai/codex", { requestTimeoutMs: 60_000 });
+    await sandbox.commands.run("npm install -g bun @openai/codex-sdk", { requestTimeoutMs: 60_000 });
 
     // Clone the repo
     await sandbox.commands.run(
