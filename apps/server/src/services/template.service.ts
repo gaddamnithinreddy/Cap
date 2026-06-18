@@ -1,5 +1,6 @@
-import { Template } from "e2b";
+import { Daytona, Image } from "@daytonaio/sdk";
 import { prisma } from "../lib/prisma";
+import { env } from "../config/env";
 
 export async function buildProjectTemplate(projectId: string): Promise<void> {
   const project = await prisma.project.findUniqueOrThrow({
@@ -32,42 +33,51 @@ export async function buildProjectTemplate(projectId: string): Promise<void> {
 
     const allPkgs = ["git", "curl", "xvfb", "x11vnc", "python3-pip", "chromium", ...servicePkgs].join(" ");
 
-    const dockerfile = `FROM node:22-bookworm
+    // Daytona snapshot name (stored in the project's template id column).
+    const snapshotName = `vendi-${projectId}`;
 
-RUN apt-get update && apt-get install -y ${allPkgs} \\
-    && pip3 install websockify --break-system-packages \\
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    if (env.DAYTONA_BUILD_SNAPSHOT === "true") {
+      // Bake the dependencies into a dedicated Daytona snapshot — parity with the
+      // old E2B template build. The same packages, global npm tools, and /workspace
+      // setup are applied on top of node:22-bookworm.
+      const image = Image.base("node:22-bookworm").dockerfileCommands([
+        `RUN apt-get update && apt-get install -y ${allPkgs} \\`,
+        `    && pip3 install websockify --break-system-packages \\`,
+        `    && apt-get clean && rm -rf /var/lib/apt/lists/*`,
+        `RUN npm install -g bun @openai/codex`,
+        `RUN mkdir -p /workspace && chmod 777 /workspace \\`,
+        `    && git config --global --add safe.directory /workspace`,
+      ]);
 
-RUN npm install -g bun @openai/codex
+      log("Building image and registering Daytona snapshot...");
 
-RUN mkdir -p /workspace && chmod 777 /workspace \\
-    && git config --global --add safe.directory /workspace
-`;
+      const daytona = new Daytona({
+        apiKey: env.DAYTONA_API_KEY,
+        apiUrl: env.DAYTONA_SERVER_URL,
+        target: env.DAYTONA_TARGET,
+      });
 
-    log("Building image from Dockerfile...");
-
-    const templateAlias = `vendi-${projectId}`;
-
-    const template = Template().fromDockerfile(dockerfile);
-
-    await Template.build(template, {
-      alias: templateAlias,
-      cpuCount: 8,
-      memoryMB: 16384,
-      onBuildLogs: (logEntry) => {
-        if (logEntry && typeof logEntry === "object" && "message" in logEntry) {
-          const msg = (logEntry as any).message;
-          if (msg) buildLog += msg + "\n";
+      await daytona.snapshot.create(
+        { name: snapshotName, image, resources: { cpu: 8, memory: 16 } },
+        {
+          onLogs: (chunk) => {
+            if (chunk) buildLog += chunk;
+          },
+          timeout: 0,
         }
-      },
-    });
+      );
+    } else {
+      // Default: session sandboxes provision their dependencies at start-up
+      // (apt/npm), so no heavyweight snapshot pre-build is required here.
+      log("Dependencies will be provisioned at sandbox start. Skipping snapshot pre-build.");
+    }
 
     log("Template built successfully!");
 
     await prisma.project.update({
       where: { id: projectId },
       data: {
-        e2bTemplateId: templateAlias,
+        e2bTemplateId: snapshotName,
         templateStatus: "READY",
         templateBuildLog: buildLog,
       },
