@@ -17,6 +17,10 @@ function getLLMConfig() {
     if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not set");
     return { url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", key: env.GEMINI_API_KEY, model: "gemini-2.5-flash" };
   }
+  if (env.LLM_PROVIDER === "groq") {
+    if (!env.GROQ_API_KEY) throw new Error("GROQ_API_KEY not set");
+    return { url: "https://api.groq.com/openai/v1/chat/completions", key: env.GROQ_API_KEY, model: "openai/gpt-oss-120b" };
+  }
   if (!env.OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY not set");
   return { url: "https://openrouter.ai/api/v1/chat/completions", key: env.OPENROUTER_API_KEY, model: "anthropic/claude-sonnet-4" };
 }

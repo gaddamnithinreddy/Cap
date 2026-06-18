@@ -65,6 +65,14 @@ function getLLMConfig() {
       llmModel: "gemini-2.5-flash",
     };
   }
+  if (env.LLM_PROVIDER === "groq") {
+    if (!env.GROQ_API_KEY) throw new Error("GROQ_API_KEY not set");
+    return {
+      llmBaseUrl: "https://api.groq.com/openai/v1/chat/completions",
+      llmApiKey: env.GROQ_API_KEY,
+      llmModel: "openai/gpt-oss-120b",
+    };
+  }
   if (!env.OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY not set");
   return {
     llmBaseUrl: "https://openrouter.ai/api/v1/chat/completions",
